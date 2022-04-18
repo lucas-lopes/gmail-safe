@@ -1,0 +1,20 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: gmail-safe
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+rabbitmq.exchanges.gmail_safe: gmail-safe-exchange
+rabbitmq.queues.gmail_safe: gmail-safe-queue
+rabbitmq.routing-keys.gmail_safe: gmail-safe-routing-key
