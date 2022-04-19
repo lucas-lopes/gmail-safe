@@ -1,4 +1,4 @@
-package com.axcient.gmailsafe.controller.exception;
+package com.axcient.gmailsafe.service.exception;
 
 public class UnauthorizedException extends RuntimeException {
 
