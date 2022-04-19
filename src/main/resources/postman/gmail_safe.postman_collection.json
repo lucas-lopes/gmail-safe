@@ -1,0 +1,88 @@
+{
+	"info": {
+		"_postman_id": "7b63e3f9-41ca-46fa-81f8-4661a72ee2fa",
+		"name": "Gmail Safe",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Backup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/backups",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"backups"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Backups",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/backups",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"backups"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Export Backup",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/exports/{backupId}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"exports",
+						"{backupId}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Export Partial Backup",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9001/exports/{backupId}/{label}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9001",
+					"path": [
+						"exports",
+						"{backupId}",
+						"{label}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
