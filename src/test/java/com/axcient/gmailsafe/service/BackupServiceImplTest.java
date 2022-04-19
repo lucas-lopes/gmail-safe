@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.axcient.gmailsafe.entity.Backup;
 import com.axcient.gmailsafe.entity.Email;
 import com.axcient.gmailsafe.entity.Status;
+import com.axcient.gmailsafe.producer.BackupProducer;
 import com.axcient.gmailsafe.repository.BackupRepository;
 import com.axcient.gmailsafe.repository.EmailRepository;
 import com.axcient.gmailsafe.service.exception.AcceptedException;
@@ -43,9 +44,12 @@ class BackupServiceImplTest {
     @MockBean
     EmailRepository emailRepository;
 
+    @MockBean
+    BackupProducer backupProducer;
+
     @BeforeEach
     public void setup() {
-        this.backupService = new BackupServiceImpl(backupRepository, emailRepository);
+        this.backupService = new BackupServiceImpl(backupRepository, emailRepository, backupProducer);
     }
 
     @Test

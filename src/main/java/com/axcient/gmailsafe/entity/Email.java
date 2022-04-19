@@ -9,10 +9,10 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document
 @Getter
-@AllArgsConstructor
 @Builder
+@Document
+@AllArgsConstructor
 public class Email implements Serializable {
 
     private static final Long SERIAL_VERSION_UUID = 1L;

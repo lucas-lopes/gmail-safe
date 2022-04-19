@@ -3,6 +3,7 @@ package com.axcient.gmailsafe.service.impl;
 import com.axcient.gmailsafe.entity.Backup;
 import com.axcient.gmailsafe.entity.Email;
 import com.axcient.gmailsafe.entity.Status;
+import com.axcient.gmailsafe.producer.BackupProducer;
 import com.axcient.gmailsafe.repository.BackupRepository;
 import com.axcient.gmailsafe.repository.EmailRepository;
 import com.axcient.gmailsafe.service.BackupService;
@@ -10,6 +11,7 @@ import com.axcient.gmailsafe.service.exception.AcceptedException;
 import com.axcient.gmailsafe.service.exception.BadRequestException;
 import com.axcient.gmailsafe.service.exception.FileException;
 import com.axcient.gmailsafe.service.exception.ObjectNotFoundException;
+import com.axcient.gmailsafe.util.Constants;
 import com.axcient.gmailsafe.util.FileUtil;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -34,6 +36,7 @@ public class BackupServiceImpl implements BackupService {
 
     private final BackupRepository backupRepository;
     private final EmailRepository emailRepository;
+    private final BackupProducer backupProducer;
 
     @Override
     public Backup saveBackup() {
@@ -82,6 +85,20 @@ public class BackupServiceImpl implements BackupService {
         throw new BadRequestException(BACKUP_ID_NOT_INFORMED);
     }
 
+    @Override
+    public void publishEmail(Email email) {
+        backupProducer.publisher(email, Constants.EXCHANGE , Constants.ROUTING_KEY);
+        log.info("Producing emailId {} to queue", email.getId());
+    }
+
+    @Override
+    public void saveEmail(Email email) {
+        if (Optional.ofNullable(email).isEmpty()) {
+            throw new BadRequestException("Was not possible save the email");
+        }
+        emailRepository.save(email);
+    }
+
     private Optional<StreamingResponseBody> generateCompressedFile(List<Email> emails, String backupId, ServletOutputStream outputStream) {
         List<String> filesToBeZipped = new ArrayList<>();
 
@@ -95,6 +112,20 @@ public class BackupServiceImpl implements BackupService {
                 }
             });
             return Optional.of(FileUtil.generateZipFile(emails.get(0).getBackupId(), filesToBeZipped, outputStream));
+        }
+        throw new ObjectNotFoundException(String.format(OBJECT_NOT_FOUND, backupId));
+    }
+
+    @Override
+    public Backup updateBackupStatus(String backupId, String status) {
+        var backupOptional = backupRepository.findById(backupId);
+
+        if (backupOptional.isPresent()) {
+            Backup backupSaved = backupOptional.get();
+            log.info("[updateBackupStatus] updating backup status: {}", backupSaved.getBackupId());
+            backupSaved.setStatus(status);
+            log.info("[updateBackupStatus] updated backup status to {}: {}", backupSaved.getStatus(), backupSaved.getBackupId());
+            return backupRepository.save(backupSaved);
         }
         throw new ObjectNotFoundException(String.format(OBJECT_NOT_FOUND, backupId));
     }
