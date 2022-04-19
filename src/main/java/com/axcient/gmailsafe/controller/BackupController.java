@@ -4,9 +4,11 @@ import com.axcient.gmailsafe.controller.exception.UnauthorizedException;
 import com.axcient.gmailsafe.entity.Backup;
 import com.axcient.gmailsafe.service.BackupService;
 import com.axcient.gmailsafe.service.GmailService;
+import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +31,12 @@ public class BackupController {
         }
 
         throw new UnauthorizedException("Was not possible finish the authentication on Gmail API");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Backup>> findAllBackups() {
+        var backups = backupService.findAllBackups();
+        return ResponseEntity.ok().body(backups);
     }
 
 }
