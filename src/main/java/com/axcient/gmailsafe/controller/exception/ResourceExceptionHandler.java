@@ -1,5 +1,6 @@
 package com.axcient.gmailsafe.controller.exception;
 
+import com.axcient.gmailsafe.service.exception.AcceptedException;
 import com.axcient.gmailsafe.service.exception.FileException;
 import com.axcient.gmailsafe.service.exception.UnauthorizedException;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,12 @@ public class ResourceExceptionHandler {
     public ResponseEntity<StandardError> throwConflictException(FileException e) {
         StandardError err = buildStandardError(HttpStatus.INTERNAL_SERVER_ERROR, e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
+    }
+
+    @ExceptionHandler(AcceptedException.class)
+    public ResponseEntity<StandardError> throwAcceptException(AcceptedException e) {
+        StandardError err = buildStandardError(HttpStatus.ACCEPTED, e);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(err);
     }
 
     private StandardError buildStandardError(HttpStatus httpStatus, RuntimeException e) {
