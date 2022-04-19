@@ -12,7 +12,7 @@ public interface BackupService {
 
     List<Backup> findAllBackups();
 
-    Optional<StreamingResponseBody> extractBackupToFile(String backupId, String label, ServletOutputStream outputStream);
+    Optional<StreamingResponseBody> exportBackupToFile(String backupId, String label, ServletOutputStream outputStream);
 
 }
 

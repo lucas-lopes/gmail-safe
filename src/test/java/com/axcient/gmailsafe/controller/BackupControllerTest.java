@@ -57,7 +57,7 @@ class BackupControllerTest {
     void testInitiateBackup_shouldCreateWithSuccess() throws Exception {
         var backup = Backup.builder()
             .backupId("625df11878aad7513a41409b")
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
@@ -103,13 +103,13 @@ class BackupControllerTest {
     void testFindAllBackups_shouldReturnAllBackupInitiated() throws Exception {
         var backupInProgress = Backup.builder()
             .backupId("625df11878aad7513a414091")
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
         var backupOk = Backup.builder()
             .backupId("625df11878aad7513a414092")
-            .status(Status.OK)
+            .status(Status.OK.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
@@ -125,7 +125,7 @@ class BackupControllerTest {
         mvc.perform(request)
             .andExpect(status().isOk())
             .andExpect(jsonPath("[*].backupId", containsInAnyOrder("625df11878aad7513a414091", "625df11878aad7513a414092")))
-            .andExpect(jsonPath("[*].status", containsInAnyOrder(Status.IN_PROGRESS.name(), Status.OK.name())))
+            .andExpect(jsonPath("[*].status", containsInAnyOrder(Status.IN_PROGRESS.getGetKey(), Status.OK.getGetKey())))
             .andExpect(jsonPath("[*].date", is(notNullValue())));
     }
 
@@ -140,7 +140,7 @@ class BackupControllerTest {
         var outputStream = httpServletResponse.getOutputStream();
 
         StreamingResponseBody responseBody = BDDMockito.mock(StreamingResponseBody.class);
-        BDDMockito.given(backupService.extractBackupToFile(backupId, label, outputStream)).willReturn(Optional.of(responseBody));
+        BDDMockito.given(backupService.exportBackupToFile(backupId, label, outputStream)).willReturn(Optional.of(responseBody));
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
             .get(BACKUP_API + "/exports/{backupId}/{label}", "625df11878aad7513a414091", "IMPORTANT")
@@ -165,7 +165,7 @@ class BackupControllerTest {
             .error(HttpStatus.INTERNAL_SERVER_ERROR.name())
             .build();
 
-        BDDMockito.given(backupService.extractBackupToFile(backupId, label, null)).willReturn(null);
+        BDDMockito.given(backupService.exportBackupToFile(backupId, label, null)).willReturn(null);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
             .get(BACKUP_API + "/exports/{backupId}/{label}", "625df11878aad7513a414093", "SENT")
@@ -189,7 +189,7 @@ class BackupControllerTest {
         var outputStream = httpServletResponse.getOutputStream();
 
         StreamingResponseBody responseBody = BDDMockito.mock(StreamingResponseBody.class);
-        BDDMockito.given(backupService.extractBackupToFile(backupId, null, outputStream)).willReturn(Optional.of(responseBody));
+        BDDMockito.given(backupService.exportBackupToFile(backupId, null, outputStream)).willReturn(Optional.of(responseBody));
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
             .get(BACKUP_API + "/exports/{backupId}", "625df11878aad7513a414091")

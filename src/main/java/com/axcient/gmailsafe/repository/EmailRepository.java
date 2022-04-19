@@ -8,4 +8,6 @@ public interface EmailRepository extends MongoRepository<Email, String> {
 
     List<Email> findByLabelIdsAndBackupId(String label, String backupId);
 
+    List<Email> findByBackupId(String backupId);
+
 }

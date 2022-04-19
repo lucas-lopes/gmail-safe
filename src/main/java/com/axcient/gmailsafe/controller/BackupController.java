@@ -49,7 +49,7 @@ public class BackupController {
                                                                      @PathVariable(value = "label") String label,
                                                                      HttpServletResponse response) throws Exception {
         var emailsCompressed =
-            backupService.extractBackupToFile(backupId, label, response.getOutputStream());
+            backupService.exportBackupToFile(backupId, label, response.getOutputStream());
 
         buildResponse(response, backupId);
 
@@ -61,7 +61,7 @@ public class BackupController {
     public ResponseEntity<StreamingResponseBody> extractBackupToZipFile(@PathVariable(name = "backupId") String backupId,
                                                                         HttpServletResponse response) throws IOException {
         var emailsCompressed =
-            backupService.extractBackupToFile(backupId, null, response.getOutputStream());
+            backupService.exportBackupToFile(backupId, null, response.getOutputStream());
 
         buildResponse(response, backupId);
 

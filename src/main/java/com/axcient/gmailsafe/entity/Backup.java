@@ -14,7 +14,7 @@ public class Backup implements Serializable {
 
     @Id
     private String backupId;
-    private Status status;
+    private String status;
     private LocalDateTime date;
 
 }

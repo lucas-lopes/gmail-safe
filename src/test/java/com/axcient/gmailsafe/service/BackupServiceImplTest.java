@@ -27,12 +27,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 @ExtendWith(SpringExtension.class)
 class BackupServiceImplTest {
@@ -55,7 +53,7 @@ class BackupServiceImplTest {
     void itShouldSaveNewBackup() {
         var backupInProgress = Backup.builder()
             .backupId("625df11878aad7513a414091")
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
@@ -66,7 +64,7 @@ class BackupServiceImplTest {
 
         assertThat(backup).isNotNull();
         assertThat(backup.getBackupId()).isEqualTo("625df11878aad7513a414091");
-        assertThat(backup.getStatus()).isEqualTo(Status.IN_PROGRESS);
+        assertThat(backup.getStatus()).isEqualTo(Status.IN_PROGRESS.getGetKey());
         assertThat(backup.getDate()).isNotNull();
     }
 
@@ -75,7 +73,7 @@ class BackupServiceImplTest {
     void itShouldThrowAcceptedException() {
         var backupInProgress = Backup.builder()
             .backupId("625df11878aad7513a414091")
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
@@ -95,13 +93,13 @@ class BackupServiceImplTest {
     void itShouldReturnAList() {
         var backupInProgress = Backup.builder()
             .backupId("625df11878aad7513a414091")
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
         var backupOk = Backup.builder()
             .backupId("625df11878aad7513a414092")
-            .status(Status.FAILED)
+            .status(Status.FAILED.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
@@ -124,7 +122,7 @@ class BackupServiceImplTest {
     @DisplayName("Should throw BadRequestException to try extract backup")
     void itShouldThrowBadRequestExceptionInExtractBackupFileByLabel() {
         Throwable exception =
-            catchThrowable(() -> backupService.extractBackupToFile(null, null, null));
+            catchThrowable(() -> backupService.exportBackupToFile(null, null, null));
 
         assertThat(exception)
             .isInstanceOf(BadRequestException.class)
@@ -138,7 +136,7 @@ class BackupServiceImplTest {
         when(backupRepository.findById(backupId)).thenReturn(Optional.empty());
 
         Throwable exception =
-            catchThrowable(() -> backupService.extractBackupToFile(backupId, null, null));
+            catchThrowable(() -> backupService.exportBackupToFile(backupId, null, null));
 
         assertThat(exception)
             .isInstanceOf(ObjectNotFoundException.class)
@@ -152,18 +150,121 @@ class BackupServiceImplTest {
 
         var backupInProgress = Backup.builder()
             .backupId(backupId)
-            .status(Status.IN_PROGRESS)
+            .status(Status.IN_PROGRESS.getGetKey())
             .date(LocalDateTime.now())
             .build();
 
         when(backupRepository.findById(backupId)).thenReturn(Optional.of(backupInProgress));
 
         Throwable exception =
-            catchThrowable(() -> backupService.extractBackupToFile(backupId, null, null));
+            catchThrowable(() -> backupService.exportBackupToFile(backupId, null, null));
 
         assertThat(exception)
             .isInstanceOf(AcceptedException.class)
             .hasMessage("Your backup does not finish yet. Please, wait some minutes to extract your backup");
+    }
+
+    @Test
+    @DisplayName("Should extract backup by label")
+    void itShouldExtractBackupFileByLabel() throws IOException {
+        String label = "IMPORTANT";
+        String backupId = "625df11878aad7513a414092";
+        List<Email> emails = buildEmailList(backupId);
+
+        var backupInProgress = Backup.builder()
+            .backupId(backupId)
+            .status(Status.OK.getGetKey())
+            .date(LocalDateTime.now())
+            .build();
+
+        HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+        var outputStream = httpServletResponse.getOutputStream();
+
+        when(backupRepository.findById(backupId)).thenReturn(Optional.of(backupInProgress));
+        when(emailRepository.findByLabelIdsAndBackupId(label, backupId)).thenReturn(emails);
+
+        var response = backupService.exportBackupToFile(backupId, label, outputStream);
+
+        assertThat(response)
+            .isNotNull()
+            .isInstanceOf(Optional.class);
+    }
+
+    @Test
+    @DisplayName("Should extract all emails to ZIP file")
+    void itShouldExtractBackupToZipFile() throws IOException {
+        String backupId = "625df11878aad7513a414092";
+        List<Email> emails = buildEmailList(backupId);
+
+        var backupInProgress = Backup.builder()
+            .backupId(backupId)
+            .status(Status.OK.getGetKey())
+            .date(LocalDateTime.now())
+            .build();
+
+        HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+        var outputStream = httpServletResponse.getOutputStream();
+
+        when(backupRepository.findById(backupId)).thenReturn(Optional.of(backupInProgress));
+        when(emailRepository.findByBackupId(backupId)).thenReturn(emails);
+
+        var response = backupService.exportBackupToFile(backupId, null, outputStream);
+
+        assertThat(response)
+            .isNotNull()
+            .isInstanceOf(Optional.class);
+    }
+
+    private List<Email> buildEmailList(String backupId) {
+        Email email1 = Email.builder()
+            .backupId(backupId)
+            .historyId(BigInteger.valueOf(7005326))
+            .internalDate(1649421445000L)
+            .labelIds(Arrays.asList("IMPORTANT", "INBOX"))
+            .raw("VG86IHVuc3Vic2NyaWJlLTk0YWNjZDVjOGRiNWQwZWM1MGE2MDlkZDFiNzIzYW")
+            .sizeEstimate(474)
+            .snippet("This message was automatically generated by Gmail.")
+            .threadId("180092de95ddb2bc")
+            .build();
+
+        Email email2 = Email.builder()
+            .backupId(backupId)
+            .historyId(BigInteger.valueOf(2342344))
+            .internalDate(82734628734687L)
+            .labelIds(Arrays.asList("IMPORTANT", "CATEGORY_UPDATE"))
+            .raw("VG86IHVuc3Vic2NyaWJlLTk0YWNjZDVjOGRiNWQwZWM1MGE2MDlkZDFiNzIzYW")
+            .sizeEstimate(1287)
+            .snippet("This message was automatically generated by Axcient Company.")
+            .threadId("23kj4gh2jh3g424")
+            .build();
+
+        return Arrays.asList(email1, email2);
+    }
+
+    @Test
+    @DisplayName("Should throw FileException to try extract backup")
+    void itShouldThrowFileExceptionInExtractBackupFileByLabel() throws IOException {
+        String label = "TEST";
+        String backupId = "625df11878aad7513a414092";
+
+        var backupInProgress = Backup.builder()
+            .backupId(backupId)
+            .status(Status.OK.getGetKey())
+            .date(LocalDateTime.now())
+            .build();
+
+        HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+        var outputStream = httpServletResponse.getOutputStream();
+
+        when(backupRepository.findById(backupId)).thenReturn(Optional.of(backupInProgress));
+        when(emailRepository.findByBackupId(backupId)).thenReturn(List.of());
+
+        Throwable exception =
+            catchThrowable(() -> backupService.exportBackupToFile(backupId, label, outputStream));
+
+        assertThat(exception)
+            .isInstanceOf(ObjectNotFoundException.class)
+            .hasMessage("The backupId 625df11878aad7513a414092 informed was not found. Please, check this information");
     }
 
 }

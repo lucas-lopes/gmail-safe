@@ -8,8 +8,12 @@ import com.axcient.gmailsafe.repository.EmailRepository;
 import com.axcient.gmailsafe.service.BackupService;
 import com.axcient.gmailsafe.service.exception.AcceptedException;
 import com.axcient.gmailsafe.service.exception.BadRequestException;
+import com.axcient.gmailsafe.service.exception.FileException;
 import com.axcient.gmailsafe.service.exception.ObjectNotFoundException;
+import com.axcient.gmailsafe.util.FileUtil;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.ServletOutputStream;
@@ -33,13 +37,13 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public Backup saveBackup() {
-        if (backupRepository.findAll().stream().anyMatch(bkp -> Status.IN_PROGRESS.equals(bkp.getStatus()))) {
+        if (backupRepository.findAll().stream().anyMatch(bkp -> Status.IN_PROGRESS.getGetKey().equals(bkp.getStatus()))) {
             throw new AcceptedException(BACKUP_IN_PROGRESS);
         }
 
         return backupRepository.save(
             Backup.builder()
-                .status(Status.IN_PROGRESS)
+                .status(Status.IN_PROGRESS.getGetKey())
                 .date(LocalDateTime.now())
                 .build()
         );
@@ -51,20 +55,48 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
-    public Optional<StreamingResponseBody> extractBackupToFile(String backupId, String label, ServletOutputStream outputStream) {
+    public Optional<StreamingResponseBody> exportBackupToFile(String backupId, String label, ServletOutputStream outputStream) {
         if (Optional.ofNullable(backupId).isPresent()) {
             log.info("[extractBackupInZipFile] Start generating zip file: {}.zip", backupId);
             var backup = backupRepository.findById(backupId);
 
             if (backup.isPresent()) {
-                if (Status.OK.equals(backup.get().getStatus())) {
+                if (Status.OK.getGetKey().equals(backup.get().getStatus())) {
+                    List<Email> emails;
 
+                    if (Optional.ofNullable(label).isPresent()) {
+                        emails = emailRepository.findByLabelIdsAndBackupId(label.toUpperCase(), backupId);
+                    } else {
+                        emails = emailRepository.findByBackupId(backupId);
+                    }
+
+                    var responseBody = generateCompressedFile(emails, backupId, outputStream)
+                        .orElseThrow(() -> new FileException("Error to try generate ZIP file"));
+
+                    return Optional.ofNullable(responseBody);
                 }
                 throw new AcceptedException(EXTRACT_BACKUP);
             }
             throw new ObjectNotFoundException(String.format(OBJECT_NOT_FOUND, backupId));
         }
         throw new BadRequestException(BACKUP_ID_NOT_INFORMED);
+    }
+
+    private Optional<StreamingResponseBody> generateCompressedFile(List<Email> emails, String backupId, ServletOutputStream outputStream) {
+        List<String> filesToBeZipped = new ArrayList<>();
+
+        if (!emails.isEmpty()) {
+            emails.forEach(email -> {
+                try {
+                    FileUtil.generateFolderStructure(backupId, email.getId(), email.toString());
+                    filesToBeZipped.add(email.getId() + ".txt");
+                } catch (IOException e) {
+                    throw new FileException(e.getMessage());
+                }
+            });
+            return Optional.of(FileUtil.generateZipFile(emails.get(0).getBackupId(), filesToBeZipped, outputStream));
+        }
+        throw new ObjectNotFoundException(String.format(OBJECT_NOT_FOUND, backupId));
     }
 
 }
