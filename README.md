@@ -24,6 +24,10 @@ Windows environments. No installation is required to compile and run the applica
 ### Requisites
 
 * **Docker:** Facilitates the use of RabbitMQ and MongoDB on OS X and Windows.
+* **Google App Configurations:** You need to go to Google Cloud Console and enable Gmail API and create 
+a single configuration. [TODO: I'll try to put this configuration later to help you]
+* **Gmail Credential:** To use this API consuming from Gmail API you need to get your OAuth2 credentials
+and put on `src/main/resources`.
 
 ### How to build the application on OS X?
 
@@ -63,7 +67,7 @@ You have two options:
 
 [Postman Collection][postman-collection]
 
-### PS: The first time you call the POST /backup endpoint you will need to copy the link that Google provides and paste it into the browser
+### PS: The first time you call the POST /backups endpoint you will need to copy the link that Google provides and paste it into the browser
 
 ---
 
@@ -270,7 +274,7 @@ authorization from the end user.
 as I should.
 
 - I would use a more performance-appropriate programming language instead of Java. I would use Golang 
-or Trust as they are much more performant. I decided to use Java and Spring Boot because my knowledge 
+or Rust as they are much more performant. I decided to use Java and Spring Boot because my knowledge 
 of these technologies doesn't even compare to my knowledge of the first two languages mentioned.
 
 I did my best on this project. It will always be like that in everything I do. I hope this code can
